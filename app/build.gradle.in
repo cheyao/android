@@ -1,7 +1,14 @@
+def buildWithCMake = project.hasProperty('BUILD_WITH_CMAKE');
+def buildAsLibrary = project.hasProperty('BUILD_AS_LIBRARY');
+def buildAsApplication = !buildAsLibrary
 apply plugin: 'com.android.application'
 
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+}
+
 android {
-	namespace "${NAMESPACE}"
+	namespace "@NAMESPACE@"
     compileSdkVersion 34
     defaultConfig {
         minSdkVersion 19
