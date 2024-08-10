@@ -10,6 +10,7 @@ string(REPLACE "." "/" JAVADIR ${NAMESPACE})
 configure_file(app/build.gradle.in ${CMAKE_CURRENT_SOURCE_DIR}/app/build.gradle @ONLY)
 configure_file(strings.xml.in ${CMAKE_CURRENT_SOURCE_DIR}/app/src/main/res/values/strings.xml)
 configure_file(Activity.java.in ${CMAKE_CURRENT_SOURCE_DIR}/app/src/main/java/${JAVADIR}/MainActivity.java)
+configure_file(strings.xml.in ${CMAKE_CURRENT_SOURCE_DIR}/app/src/main/res/values/strings.xml)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	message("Unsupported")
