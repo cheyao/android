@@ -1,3 +1,6 @@
 [submodule "app/jni/SDL"]
 	path = app/jni/SDL
 	url = https://github.com/libsdl-org/SDL
+[submodule "app/jni/freetype"]
+	path = app/jni/freetype
+	url = https://gitlab.freedesktop.org/freetype/freetype
