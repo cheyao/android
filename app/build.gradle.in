@@ -12,15 +12,16 @@ android {
             keyPassword RELEASE_KEY_PASSWORD
         }
     }
-    compileSdkVersion 34
+    compileSdkVersion 35
     defaultConfig {
-        minSdkVersion 19
-        targetSdkVersion 34
+        minSdkVersion 21
+        targetSdkVersion 35
         versionCode 1
         versionName "1.0"
         externalNativeBuild {
             cmake {
                 arguments "-DANDROID_PLATFORM=android-19", "-DANDROID_STL=c++_static"
+                // abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
                 abiFilters 'arm64-v8a'
             }
         }
