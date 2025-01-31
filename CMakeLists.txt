@@ -3,7 +3,7 @@ project(android_build VERSION 1.0 DESCRIPTION "Build process for SDL android apk
 
 unset(ANDROID PARENT_SCOPE)
 
-set(NAME Game)
+set(NAME "2D Minecraft")
 
 string(REPLACE "." "/" JAVADIR ${NAMESPACE})
 
