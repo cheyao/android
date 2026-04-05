@@ -1,6 +1,40 @@
 package @NAMESPACE@;
 
+import android.os.Bundle;
+
 import org.libsdl.app.SDLActivity;
 
 public class MainActivity extends SDLActivity {
+    private UsbSerialService usbSerialService;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        usbSerialService = new UsbSerialService(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (usbSerialService != null) {
+            usbSerialService.destroy();
+            usbSerialService = null;
+        }
+        super.onDestroy();
+    }
+
+    public String[] usbSerialEnumerate() {
+        return usbSerialService.enumerate();
+    }
+
+    public int usbSerialOpen(int index, int baudRate) {
+        return usbSerialService.open(index, baudRate);
+    }
+
+    public boolean usbSerialWrite(byte[] data) {
+        return usbSerialService.write(data);
+    }
+
+    public void usbSerialClose() {
+        usbSerialService.close();
+    }
 }
