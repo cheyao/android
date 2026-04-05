@@ -3,6 +3,7 @@ app/src/main/res/values/strings.xml
 
 app/src/main/java/*
 !app/src/main/java/org/libsdl/app/*
+app/src/main/res/mipmap-*
 
 # Created by https://www.toptal.com/developers/gitignore/api/linux,macos,android,androidstudio,gradle,cmake
 # Edit at https://www.toptal.com/developers/gitignore?templates=linux,macos,android,androidstudio,gradle,cmake
