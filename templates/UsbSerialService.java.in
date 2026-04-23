@@ -1,0 +1,188 @@
+package @NAMESPACE@;
+
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbManager;
+import android.os.Build;
+import android.util.Log;
+
+import com.hoho.android.usbserial.driver.UsbSerialDriver;
+import com.hoho.android.usbserial.driver.UsbSerialPort;
+import com.hoho.android.usbserial.driver.UsbSerialProber;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class UsbSerialService {
+    private static final String TAG = "UsbSerialService";
+    private static final String ACTION_USB_PERMISSION = "@NAMESPACE@.USB_PERMISSION";
+
+    private final Context context;
+    private final UsbManager usbManager;
+    private List<UsbSerialDriver> drivers = new ArrayList<>();
+    private UsbSerialPort openPort;
+    private UsbDeviceConnection openConnection;
+
+    private int pendingOpenIndex = -1;
+    private int pendingOpenBaudRate = -1;
+
+    private final BroadcastReceiver usbPermissionReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context ctx, Intent intent) {
+            if (ACTION_USB_PERMISSION.equals(intent.getAction())) {
+                synchronized (UsbSerialService.this) {
+                    UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                        Log.i(TAG, "USB permission granted for " + device);
+                        if (pendingOpenIndex >= 0) {
+                            openInternal(pendingOpenIndex, pendingOpenBaudRate);
+                        }
+                    } else {
+                        Log.w(TAG, "USB permission denied for " + device);
+                    }
+                    pendingOpenIndex = -1;
+                    pendingOpenBaudRate = -1;
+                }
+            }
+        }
+    };
+
+    public UsbSerialService(Context context) {
+        this.context = context;
+        this.usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+        if (usbManager == null) {
+            Log.e(TAG, "UsbManager not available");
+        }
+        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(usbPermissionReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            context.registerReceiver(usbPermissionReceiver, filter);
+        }
+    }
+
+    public String[] enumerate() {
+        drivers.clear();
+        if (usbManager == null) {
+            Log.e(TAG, "enumerate: UsbManager is null");
+            return new String[0];
+        }
+        drivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager);
+        String[] names = new String[drivers.size()];
+        for (int i = 0; i < drivers.size(); i++) {
+            UsbSerialDriver d = drivers.get(i);
+            UsbDevice dev = d.getDevice();
+            String driverName = d.getClass().getSimpleName().replace("SerialDriver", "");
+            names[i] = "USB Device " + String.format("%04x:%04x", dev.getVendorId(), dev.getProductId())
+                    + " (" + driverName + ")";
+        }
+        return names;
+    }
+
+    /**
+     * @@return 0=success, 1=permission_pending, -1=error
+     */
+    public int open(int index, int baudRate) {
+        if (usbManager == null) {
+            Log.e(TAG, "open: UsbManager is null");
+            return -1;
+        }
+        if (index < 0 || index >= drivers.size()) {
+            Log.e(TAG, "open: invalid index " + index);
+            return -1;
+        }
+        close();
+
+        UsbSerialDriver driver = drivers.get(index);
+        UsbDevice device = driver.getDevice();
+
+        if (!usbManager.hasPermission(device)) {
+            pendingOpenIndex = index;
+            pendingOpenBaudRate = baudRate;
+            int flags = 0;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                flags = PendingIntent.FLAG_IMMUTABLE;
+            }
+            PendingIntent pi = PendingIntent.getBroadcast(context, 0,
+                    new Intent(ACTION_USB_PERMISSION), flags);
+            usbManager.requestPermission(device, pi);
+            Log.i(TAG, "Requesting USB permission for " + device);
+            return 1;
+        }
+
+        return openInternal(index, baudRate);
+    }
+
+    private int openInternal(int index, int baudRate) {
+        if (index < 0 || index >= drivers.size()) {
+            Log.e(TAG, "openInternal: invalid index " + index);
+            return -1;
+        }
+        UsbSerialDriver driver = drivers.get(index);
+        UsbDeviceConnection connection = usbManager.openDevice(driver.getDevice());
+        if (connection == null) {
+            Log.e(TAG, "openInternal: openDevice returned null");
+            return -1;
+        }
+        UsbSerialPort port = driver.getPorts().get(0);
+        try {
+            port.open(connection);
+            port.setParameters(baudRate, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
+        } catch (IOException e) {
+            Log.e(TAG, "openInternal: failed to open port", e);
+            try {
+                port.close();
+            } catch (IOException ignored) {
+            }
+            connection.close();
+            return -1;
+        }
+        openPort = port;
+        openConnection = connection;
+        Log.i(TAG, "Opened USB serial port at " + baudRate + " baud");
+        return 0;
+    }
+
+    public synchronized boolean write(byte[] data) {
+        if (openPort == null) {
+            Log.w(TAG, "write: no port open");
+            return false;
+        }
+        try {
+            openPort.write(data, 200);
+            return true;
+        } catch (IOException e) {
+            Log.e(TAG, "write: failed", e);
+            return false;
+        }
+    }
+
+    public void close() {
+        if (openPort != null) {
+            try {
+                openPort.close();
+            } catch (IOException e) {
+                Log.e(TAG, "close: failed to close port", e);
+            }
+            openPort = null;
+        }
+        if (openConnection != null) {
+            openConnection.close();
+            openConnection = null;
+        }
+    }
+
+    public void destroy() {
+        close();
+        try {
+            context.unregisterReceiver(usbPermissionReceiver);
+        } catch (IllegalArgumentException ignored) {
+        }
+    }
+}

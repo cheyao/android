@@ -18,7 +18,8 @@ endif()
 # We need to configure these files
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/templates/build.gradle.in"  "${CMAKE_CURRENT_SOURCE_DIR}/app/build.gradle"                               @ONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/templates/strings.xml.in"   "${CMAKE_CURRENT_SOURCE_DIR}/app/src/main/res/values/strings.xml"            @ONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/templates/Activity.java.in" "${CMAKE_CURRENT_SOURCE_DIR}/app/src/main/java/${JAVADIR}/MainActivity.java" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/templates/Activity.java.in"          "${CMAKE_CURRENT_SOURCE_DIR}/app/src/main/java/${JAVADIR}/MainActivity.java"    @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/templates/UsbSerialService.java.in" "${CMAKE_CURRENT_SOURCE_DIR}/app/src/main/java/${JAVADIR}/UsbSerialService.java" @ONLY)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	set(GRADLEW_COMMAND gradlew.bat)
