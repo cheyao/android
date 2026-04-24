@@ -54,7 +54,7 @@ add_custom_command(
 # 2. Copy the binary to the output folder
 add_custom_target(
 	build_apk ALL
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/app/build/outputs/apk/release/app-release.apk" "${CMAKE_BINARY_DIR}/${BUILD_NAME}-${VERSION}-Android.apk" 
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/app/build/outputs/apk/release/app-release.apk" "${CMAKE_BINARY_DIR}/${BUILD_NAME}-${CMAKE_PROJECT_VERSION}-Android.apk" 
 	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/app/build/outputs/apk/release/app-release.apk"
 )
 

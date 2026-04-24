@@ -34,6 +34,10 @@ public class MainActivity extends SDLActivity {
         return usbSerialService.write(data);
     }
 
+    public byte[] usbSerialRead(int size, int timeoutMs) {
+        return usbSerialService.read(size, timeoutMs);
+    }
+
     public void usbSerialClose() {
         usbSerialService.close();
     }

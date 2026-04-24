@@ -163,6 +163,36 @@ public class UsbSerialService {
         }
     }
 
+    public synchronized byte[] read(int size, int timeoutMs) {
+        if (openPort == null) {
+            Log.w(TAG, "read: no port open");
+            return null;
+        }
+        byte[] result = new byte[size];
+        byte[] tmp = new byte[size];
+        int offset = 0;
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        try {
+            while (offset < size) {
+                long remaining = deadline - System.currentTimeMillis();
+                if (remaining <= 0) {
+                    Log.w(TAG, "read: timeout after reading " + offset + "/" + size + " bytes");
+                    return null;
+                }
+                int n = openPort.read(tmp, (int) Math.min(remaining, Integer.MAX_VALUE));
+                if (n > 0) {
+                    int toCopy = Math.min(n, size - offset);
+                    System.arraycopy(tmp, 0, result, offset, toCopy);
+                    offset += toCopy;
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "read: failed", e);
+            return null;
+        }
+        return result;
+    }
+
     public void close() {
         if (openPort != null) {
             try {
