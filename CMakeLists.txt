@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.10)
 project(android_build VERSION 1.0 DESCRIPTION "Build process for SDL android apk")
 
 unset(ANDROID PARENT_SCOPE)
